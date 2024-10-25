@@ -1,0 +1,116 @@
+#######################################
+# Syntax Coloring Map For BMSLib
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+BMSLib	KEYWORD1
+BMSError	KEYWORD1
+BatteryChemistry	KEYWORD1
+BMSConfig	KEYWORD1
+BatteryStatus	KEYWORD1
+BMSAlarmConfig	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin	KEYWORD2
+getVersion	KEYWORD2
+isOnline	KEYWORD2
+getLastError	KEYWORD2
+readVoltage	KEYWORD2
+readCurrent	KEYWORD2
+readCapacity	KEYWORD2
+readTemperature	KEYWORD2
+readFullChargeCapacity	KEYWORD2
+readRemainingCapacity	KEYWORD2
+readSoC	KEYWORD2
+readSoH	KEYWORD2
+readCycleCount	KEYWORD2
+readDesignCapacity	KEYWORD2
+readSafetyStatus	KEYWORD2
+readVoltage_inVolts	KEYWORD2
+readCurrent_inAmps	KEYWORD2
+readCapacity_inAmpHours	KEYWORD2
+readTemperature_inCelsius	KEYWORD2
+readFullChargeCapacity_inAmpHours	KEYWORD2
+readRemainingCapacity_inAmpHours	KEYWORD2
+readSoC_inPercentage	KEYWORD2
+readSoH_inPercentage	KEYWORD2
+enterConfigMode	KEYWORD2
+exitConfigMode	KEYWORD2
+calibrateVoltage	KEYWORD2
+calibrateCurrent	KEYWORD2
+calibrateTemperature	KEYWORD2
+setBatteryChemistry	KEYWORD2
+getBatteryChemistry	KEYWORD2
+isOverVoltage	KEYWORD2
+isUnderVoltage	KEYWORD2
+isOverCurrent	KEYWORD2
+isOverTemperature	KEYWORD2
+factoryReset	KEYWORD2
+sleep	KEYWORD2
+wake	KEYWORD2
+resetWatchdog	KEYWORD2
+getAverageTimeToEmpty	KEYWORD2
+getAverageTimeToFull	KEYWORD2
+getAvailableEnergy	KEYWORD2
+getAvailablePower	KEYWORD2
+getMaxError	KEYWORD2
+getChargeVoltage	KEYWORD2
+getChargeCurrent	KEYWORD2
+setChargeVoltage	KEYWORD2
+setChargeCurrent	KEYWORD2
+getAvailableEnergy_inWh	KEYWORD2
+getAvailablePower_inW	KEYWORD2
+getChargeVoltage_inVolts	KEYWORD2
+getChargeCurrent_inAmps	KEYWORD2
+getBatteryStatus	KEYWORD2
+setConfiguration	KEYWORD2
+getConfiguration	KEYWORD2
+setAlarmConfig	KEYWORD2
+getAlarmConfig	KEYWORD2
+getAlarmStatus	KEYWORD2
+clearAlarms	KEYWORD2
+isOverVoltageAlarm	KEYWORD2
+isUnderVoltageAlarm	KEYWORD2
+isOverCurrentAlarm	KEYWORD2
+isOverTemperatureAlarm	KEYWORD2
+isUnderTemperatureAlarm	KEYWORD2
+isLowSoCAlarm	KEYWORD2
+isDischargingAlarm	KEYWORD2
+isChargingAlarm	KEYWORD2
+setLowSoCAlarm	KEYWORD2
+setHighTemperatureAlarm	KEYWORD2
+setLowTemperatureAlarm	KEYWORD2
+setLowVoltageAlarm	KEYWORD2
+setHighVoltageAlarm	KEYWORD2
+setCurrentAlarm	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+BMSLIB_VERSION_MAJOR	LITERAL1
+BMSLIB_VERSION_MINOR	LITERAL1
+BMSLIB_VERSION_PATCH	LITERAL1
+BMS_I2C_ADDRESS	LITERAL1
+BMS_DEVICE_ID	LITERAL1
+BMS_CONFIG_MODE_ENTER	LITERAL1
+BMS_CONFIG_MODE_EXIT	LITERAL1
+BMS_SLEEP_COMMAND	LITERAL1
+BMS_WAKE_COMMAND	LITERAL1
+BMS_WATCHDOG_RESET	LITERAL1
+BMS_FACTORY_RESET	LITERAL1
+BMS_SAFETY_OV_MASK	LITERAL1
+BMS_SAFETY_UV_MASK	LITERAL1
+BMS_SAFETY_OC_MASK	LITERAL1
+BMS_SAFETY_OT_MASK	LITERAL1
+BMS_ALARM_OV	LITERAL1
+BMS_ALARM_UV	LITERAL1
+BMS_ALARM_OC	LITERAL1
+BMS_ALARM_OT	LITERAL1
+BMS_ALARM_UT	LITERAL1
+BMS_ALARM_SOC_LOW	LITERAL1
+BMS_ALARM_DISCHG	LITERAL1
+BMS_ALARM_CHG	LITERAL1
