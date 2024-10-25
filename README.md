@@ -1,6 +1,16 @@
 # BMSLib
 
-A comprehensive Arduino library for interfacing with the BQ34Z100 Battery Management System. This library provides a complete interface for battery monitoring, configuration, and management across multiple Arduino platforms.
+A comprehensive Arduino library for interfacing with the BQ34Z100-R2 Battery Management System. This library provides a complete interface for battery monitoring, configuration, and management across multiple Arduino platforms.
+
+[![Arduino Badge](https://img.shields.io/badge/Arduino-Library-blue)]()
+[![Platform Badge](https://img.shields.io/badge/Platform-ESP32%20%7C%20ESP8266%20%7C%20Arduino-green)]()
+[![Version Badge](https://img.shields.io/badge/Version-1.2.0-blue)]()
+
+## Documentation
+
+- [Complete API Reference](docs/APIReference.md) - Detailed documentation of all functions and features
+- [Examples](examples/) - Example sketches demonstrating library usage
+- [Hardware Setup](docs/Hardware.md) - Connection and hardware setup guide
 
 ## Features
 
@@ -32,8 +42,11 @@ A comprehensive Arduino library for interfacing with the BQ34Z100 Battery Manage
 
 ## Hardware Compatibility
 
-- Supports all Arduino boards with I2C capability
-- Tested on the ESP32 platform only at this time.
+- Arduino Uno/Nano (ATmega328P)
+- Arduino Mega (ATmega2560)
+- ESP32
+- ESP8266
+- Any Arduino-compatible board with I2C support
 
 ## Installation
 
@@ -73,50 +86,18 @@ void loop() {
 }
 ```
 
-## API Reference
+## Quick Reference
 
-### Core Functions
+For full documentation of all functions, see the [API Reference](docs/APIReference.md).
 
-| Function | Description | Return Type |
-|----------|-------------|-------------|
-| `begin()` | Initialize BMS communication | bool |
-| `isOnline()` | Check if BMS is responding | bool |
-| `getLastError()` | Get last error status | BMSError |
-
-### Battery Measurements
-
-| Function | Description | Return Type |
-|----------|-------------|-------------|
-| `readVoltage_inVolts()` | Get battery voltage | float |
-| `readCurrent_inAmps()` | Get current flow | float |
-| `readTemperature_inCelsius()` | Get battery temperature | float |
-| `readSoC()` | Get State of Charge | uint16_t |
-| `readSoH()` | Get State of Health | uint16_t |
-
-### Power Management
-
-| Function | Description | Return Type |
-|----------|-------------|-------------|
-| `sleep()` | Enter sleep mode | bool |
-| `wake()` | Exit sleep mode | bool |
-| `resetWatchdog()` | Reset watchdog timer | bool |
-
-### Alarm Functions
-
-| Function | Description | Return Type |
-|----------|-------------|-------------|
-| `setAlarmConfig()` | Configure alarm settings | bool |
-| `getAlarmStatus()` | Get current alarm status | uint16_t |
-| `clearAlarms()` | Clear active alarms | bool |
-
-### Configuration Functions
-
-| Function | Description | Return Type |
-|----------|-------------|-------------|
-| `setConfiguration()` | Set BMS configuration | bool |
-| `getConfiguration()` | Get current configuration | bool |
-| `enterConfigMode()` | Enter configuration mode | bool |
-| `exitConfigMode()` | Exit configuration mode | bool |
+### Common Functions
+| Category | Example Functions | Description |
+|----------|------------------|-------------|
+| Basic Operations | `begin()`, `isOnline()` | Core initialization and status |
+| Battery Measurements | `readVoltage_inVolts()`, `readCurrent_inAmps()` | Basic battery parameters |
+| Power Management | `sleep()`, `wake()` | Power state control |
+| Alarms | `setAlarmConfig()`, `getAlarmStatus()` | Alarm system management |
+| Configuration | `setConfiguration()`, `getConfiguration()` | BMS configuration |
 
 ## Error Handling
 
@@ -133,26 +114,6 @@ enum class BMSError {
     INITIALIZATION_ERROR,
     CONFIGURATION_ERROR
 };
-```
-
-## Advanced Configuration
-
-### Battery Chemistry Configuration
-
-```cpp
-BMSConfig config;
-config.chemistry = BatteryChemistry::LIION;
-config.designCapacity = 2000;  // mAh
-bms.setConfiguration(config);
-```
-
-### Alarm Configuration
-
-```cpp
-BMSAlarmConfig alarmConfig;
-alarmConfig.enableOverVoltage = true;
-alarmConfig.voltHighThreshold = 4200;  // mV
-bms.setAlarmConfig(alarmConfig);
 ```
 
 ## Platform-Specific Features
@@ -180,15 +141,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This library is released under the [MIT License](LICENSE).
 
-## Author
-
-Chris Formeister
-
-## Acknowledgments
-
-- Texas Instruments BQ34Z100-R2 Technical Reference
-- Arduino Community
-
 ## Support
 
 For bugs, feature requests, and questions:
@@ -200,3 +152,8 @@ For bugs, feature requests, and questions:
 - 1.2.0: Added alarm system support
 - 1.1.0: Added advanced power management
 - 1.0.0: Initial release
+
+## References
+
+- [BQ34Z100-R2 Technical Reference](https://www.ti.com/product/BQ34Z100-R2)
+- [Hardware Setup Guide](docs/Hardware.md)
