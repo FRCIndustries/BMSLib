@@ -1,8 +1,13 @@
 /*
  * BMSLib - Advanced Example
  * 
- * This example demonstrates advanced features of the BMSLib library,
- * including configuration, power management, and detailed status monitoring.
+ * This example demonstrates advanced features including:
+ * - Battery status monitoring
+ * - Power management
+ * - Configuration
+ * - Error handling
+ * - Temperature compensation
+ * - Available energy/power monitoring
  * 
  * Hardware Requirements:
  * - Arduino board (Uno, Nano, ESP32, ESP8266, etc.)
@@ -15,114 +20,147 @@
 
 BMSLib bms;
 
-void printBatteryStatus(const BatteryStatus& status) {
-  Serial.println("\nDetailed Battery Status:");
-  Serial.println("------------------------");
-  Serial.printf("Voltage: %.2fV\n", status.voltage);
-  Serial.printf("Current: %.2fA\n", status.current);
-  Serial.printf("Temperature: %.1f°C\n", status.temperature);
-  Serial.printf("State of Charge: %d%%\n", status.soc);
-  Serial.printf("State of Health: %d%%\n", status.soh);
-  Serial.printf("Cycle Count: %d\n", status.cycleCount);
-  Serial.printf("Remaining Capacity: %.2fAh\n", status.remainingCapacity);
-  Serial.printf("Full Charge Capacity: %.2fAh\n", status.fullChargeCapacity);
-  Serial.printf("Status: %s\n", status.isCharging ? "Charging" : 
-                               (status.isDischarging ? "Discharging" : "Idle"));
-  if (status.hasError) {
-    Serial.println("WARNING: Error condition detected!");
-  }
+void setupBMS() {
+    Serial.println("\nConfiguring BMS...");
+    
+    BMSConfig config;
+    // Customize configuration for your battery pack
+    config.chemistry = BatteryChemistry::LIION;
+    config.designCapacity = 2000;         // 2000mAh
+    config.overvoltageThreshold = 4200;   // 4.2V
+    config.undervoltageThreshold = 2800;  // 2.8V
+    config.overcurrentThreshold = 3000;   // 3A
+    config.temperatureLimit = 3230;       // 50°C
+    
+    if (!bms.setConfiguration(config)) {
+        Serial.println("Failed to configure BMS!");
+        Serial.printf("Error: %d\n", static_cast<int>(bms.getLastError()));
+        return;
+    }
+    
+    Serial.println("BMS configured successfully!");
+    printConfiguration(config);
 }
 
-void configureBMS() {
-  Serial.println("\nConfiguring BMS...");
-  
-  BMSConfig config;
-  // Customize configuration
-  config.overcurrentThreshold = 3000;    // 3A
-  config.overvoltageThreshold = 4200;    // 4.2V
-  config.undervoltageThreshold = 3000;   // 3.0V
-  config.temperatureLimit = 3230;        // 50°C
-  config.designCapacity = 2000;          // 2000mAh
-  config.chemistry = BatteryChemistry::LIION;
-  
-  if (!bms.setConfiguration(config)) {
-    Serial.println("Failed to configure BMS!");
-    Serial.printf("Error: %d\n", (int)bms.getLastError());
-    return;
-  }
-  
-  Serial.println("BMS configured successfully!");
+void printConfiguration(const BMSConfig& config) {
+    Serial.println("\nBMS Configuration:");
+    Serial.println("-------------------");
+    Serial.printf("Chemistry: %s\n", 
+        config.chemistry == BatteryChemistry::LIION ? "Li-ion" :
+        config.chemistry == BatteryChemistry::LIPO ? "LiPo" :
+        config.chemistry == BatteryChemistry::LIFEP04 ? "LiFePO4" : "Unknown");
+    Serial.printf("Design Capacity: %dmAh\n", config.designCapacity);
+    Serial.printf("Overvoltage Threshold: %.2fV\n", config.overvoltageThreshold / 1000.0f);
+    Serial.printf("Undervoltage Threshold: %.2fV\n", config.undervoltageThreshold / 1000.0f);
+    Serial.printf("Overcurrent Threshold: %.2fA\n", config.overcurrentThreshold / 1000.0f);
+    Serial.printf("Temperature Limit: %.1f°C\n", (config.temperatureLimit / 10.0f) - 273.15f);
 }
 
-void printPowerMetrics() {
-  Serial.println("\nPower Metrics:");
-  Serial.println("--------------");
-  
-  // Available energy and power
-  float energy = bms.getAvailableEnergy_inWh();
-  float power = bms.getAvailablePower_inW();
-  Serial.printf("Available Energy: %.2fWh\n", energy);
-  Serial.printf("Available Power: %.2fW\n", power);
-  
-  // Charge parameters
-  float chargeVoltage = bms.getChargeVoltage_inVolts();
-  float chargeCurrent = bms.getChargeCurrent_inAmps();
-  Serial.printf("Charge Voltage Limit: %.2fV\n", chargeVoltage);
-  Serial.printf("Charge Current Limit: %.2fA\n", chargeCurrent);
-  
-  // Error margin
-  uint8_t maxError = bms.getMaxError();
-  Serial.printf("Maximum Error: %d%%\n", maxError);
+void printBatteryStatus() {
+    BatteryStatus status;
+    if (!bms.getBatteryStatus(status)) {
+        Serial.println("Failed to read battery status!");
+        Serial.printf("Error: %d\n", static_cast<int>(bms.getLastError()));
+        return;
+    }
+
+    Serial.println("\nBattery Status:");
+    Serial.println("--------------");
+    Serial.printf("Voltage: %.2fV\n", status.voltage);
+    Serial.printf("Current: %.2fA %s\n", abs(status.current), 
+        status.isCharging ? "(Charging)" : 
+        status.isDischarging ? "(Discharging)" : "(Idle)");
+    Serial.printf("Temperature: %.1f°C\n", status.temperature);
+    Serial.printf("State of Charge: %d%%\n", status.soc);
+    Serial.printf("State of Health: %d%%\n", status.soh);
+    Serial.printf("Cycle Count: %d\n", status.cycleCount);
+    Serial.printf("Remaining Capacity: %.2fAh\n", status.remainingCapacity);
+    Serial.printf("Full Charge Capacity: %.2fAh\n", status.fullChargeCapacity);
+    
+    if (status.hasError) {
+        Serial.println("\nWarnings/Errors:");
+        if (bms.isOverVoltage()) Serial.println("- Over Voltage!");
+        if (bms.isUnderVoltage()) Serial.println("- Under Voltage!");
+        if (bms.isOverCurrent()) Serial.println("- Over Current!");
+        if (bms.isOverTemperature()) Serial.println("- Over Temperature!");
+    }
+
+    // Power predictions
+    uint16_t timeToEmpty = bms.getAverageTimeToEmpty();
+    if (timeToEmpty != 65535) {
+        Serial.printf("Estimated Time to Empty: %d minutes\n", timeToEmpty);
+    }
+    
+    uint16_t timeToFull = bms.getAverageTimeToFull();
+    if (timeToFull != 65535) {
+        Serial.printf("Estimated Time to Full: %d minutes\n", timeToFull);
+    }
+
+    // Available energy/power
+    float availableEnergy = bms.getAvailableEnergy_inWh();
+    float availablePower = bms.getAvailablePower_inW();
+    Serial.printf("Available Energy: %.1fWh\n", availableEnergy);
+    Serial.printf("Available Power: %.1fW\n", availablePower);
+
+    // Get error margin
+    uint8_t maxError = bms.getMaxError();
+    Serial.printf("Maximum Error: %d%%\n", maxError);
 }
 
 void setup() {
-  Serial.begin(115200);
-  while (!Serial) delay(10);
-  
-  Serial.println("BMSLib Advanced Example");
-  Serial.println("----------------------");
-  
-  if (!bms.begin()) {
-    Serial.println("Failed to initialize BMS!");
-    while (1) delay(1000);
-  }
-  
-  // Configure the BMS
-  configureBMS();
+    Serial.begin(115200);
+    while (!Serial) delay(10);
+    
+    Serial.println("BMSLib Advanced Example");
+    Serial.println("----------------------");
+    
+    if (!bms.begin()) {
+        Serial.println("Failed to initialize BMS!");
+        Serial.printf("Error: %d\n", static_cast<int>(bms.getLastError()));
+        while (1) delay(1000);
+    }
+    
+    // Configure the BMS
+    setupBMS();
 }
 
 void loop() {
-  // Get comprehensive battery status
-  BatteryStatus status;
-  if (bms.getBatteryStatus(status)) {
-    printBatteryStatus(status);
-  } else {
-    Serial.println("Failed to read battery status!");
-  }
-  
-  // Print power metrics
-  printPowerMetrics();
-  
-  // Demonstrate power management (example)
-  static bool toggle = false;
-  if (toggle) {
-    // Note: Don't actually use sleep/wake this frequently!
-    // This is just for demonstration.
-    Serial.println("\nPutting BMS to sleep...");
-    if (bms.sleep()) {
-      delay(1000);  // Wait a bit
-      Serial.println("Waking BMS...");
-      if (!bms.wake()) {
-        Serial.println("Failed to wake BMS!");
-      }
-    } else {
-      Serial.println("Failed to put BMS to sleep!");
+    static unsigned long lastUpdate = 0;
+    const unsigned long UPDATE_INTERVAL = 5000; // Update every 5 seconds
+    
+    if (millis() - lastUpdate >= UPDATE_INTERVAL) {
+        lastUpdate = millis();
+        printBatteryStatus();
+        
+        // Reset watchdog
+        bms.resetWatchdog();
     }
-  }
-  toggle = !toggle;
-  
-  // Reset watchdog
-  bms.resetWatchdog();
-  
-  delay(10000);  // Wait 10 seconds before next reading
+    
+    // Check for serial commands
+    if (Serial.available()) {
+        char cmd = Serial.read();
+        switch (cmd) {
+            case 's':
+                Serial.println("Putting BMS to sleep...");
+                if (bms.sleep()) {
+                    Serial.println("BMS is now in sleep mode");
+                }
+                break;
+                
+            case 'w':
+                Serial.println("Waking BMS...");
+                if (bms.wake()) {
+                    Serial.println("BMS is now awake");
+                }
+                break;
+                
+            case 'r':
+                Serial.println("Resetting BMS to factory defaults...");
+                if (bms.factoryReset()) {
+                    Serial.println("Factory reset successful");
+                    setupBMS();  // Reconfigure BMS
+                }
+                break;
+        }
+    }
 }

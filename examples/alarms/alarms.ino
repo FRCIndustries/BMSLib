@@ -1,218 +1,166 @@
 /*
- * BMSLib - Alarms Example
+ * BMSLib - Advanced Example
  * 
- * This example demonstrates the alarm functionality of the BMSLib library,
- * including setting up alarms, monitoring them, and handling alerts.
+ * This example demonstrates advanced features including:
+ * - Battery status monitoring
+ * - Power management
+ * - Configuration
+ * - Error handling
+ * - Temperature compensation
+ * - Available energy/power monitoring
  * 
  * Hardware Requirements:
  * - Arduino board (Uno, Nano, ESP32, ESP8266, etc.)
  * - BQ34Z100-R2 BMS connected via I2C
  * - Battery pack connected to BMS
- * 
- * Optional:
- * - LED connected to pin 13 for visual alarm indication
  */
 
 #include <Wire.h>
 #include <BMSLib.h>
 
 BMSLib bms;
-const int alarmLedPin = 13;
 
-void configureAlarms() {
-  Serial.println("Configuring alarms...");
-  
-  BMSAlarmConfig alarmConfig;
-  
-  // Configure which alarms are enabled
-  alarmConfig.enableOverVoltage = true;
-  alarmConfig.enableUnderVoltage = true;
-  alarmConfig.enableOverCurrent = true;
-  alarmConfig.enableOverTemperature = true;
-  alarmConfig.enableUnderTemperature = true;
-  alarmConfig.enableLowSoC = true;
-  alarmConfig.enableDischarging = false;
-  alarmConfig.enableCharging = false;
-
-  // Set alarm thresholds
-  alarmConfig.socLowThreshold = 20;        // Alert at 20% SoC
-  alarmConfig.tempHighThreshold = 3230;    // 50°C
-  alarmConfig.tempLowThreshold = 2731;     // 0°C
-  alarmConfig.voltLowThreshold = 3000;     // 3.0V
-  alarmConfig.voltHighThreshold = 4200;    // 4.2V
-  alarmConfig.currentThreshold = 2000;     // 2A
-
-  if (!bms.setAlarmConfig(alarmConfig)) {
-    Serial.println("Failed to configure alarms!");
-    Serial.printf("Error: %d\n", (int)bms.getLastError());
-    return;
-  }
-
-  Serial.println("Alarms configured successfully!");
-  printAlarmConfig(alarmConfig);
+void setupBMS() {
+    Serial.println("\nConfiguring BMS...");
+    
+    BMSConfig config;
+    // Customize configuration for your battery pack
+    config.chemistry = BatteryChemistry::LIION;
+    config.designCapacity = 2000;         // 2000mAh
+    config.overvoltageThreshold = 4200;   // 4.2V
+    config.undervoltageThreshold = 2800;  // 2.8V
+    config.overcurrentThreshold = 3000;   // 3A
+    config.temperatureLimit = 3230;       // 50°C
+    
+    if (!bms.setConfiguration(config)) {
+        Serial.println("Failed to configure BMS!");
+        Serial.printf("Error: %d\n", static_cast<int>(bms.getLastError()));
+        return;
+    }
+    
+    Serial.println("BMS configured successfully!");
+    printConfiguration(config);
 }
 
-void printAlarmConfig(const BMSAlarmConfig& config) {
-  Serial.println("\nAlarm Configuration:");
-  Serial.println("-------------------");
-  Serial.printf("Over Voltage Alarm: %s\n", config.enableOverVoltage ? "Enabled" : "Disabled");
-  Serial.printf("Under Voltage Alarm: %s\n", config.enableUnderVoltage ? "Enabled" : "Disabled");
-  Serial.printf("Over Current Alarm: %s\n", config.enableOverCurrent ? "Enabled" : "Disabled");
-  Serial.printf("Over Temperature Alarm: %s\n", config.enableOverTemperature ? "Enabled" : "Disabled");
-  Serial.printf("Under Temperature Alarm: %s\n", config.enableUnderTemperature ? "Enabled" : "Disabled");
-  Serial.printf("Low SoC Alarm: %s\n", config.enableLowSoC ? "Enabled" : "Disabled");
-  
-  Serial.println("\nAlarm Thresholds:");
-  Serial.printf("Low SoC: %d%%\n", config.socLowThreshold);
-  Serial.printf("High Temperature: %.1f°C\n", (config.tempHighThreshold / 10.0) - 273.15);
-  Serial.printf("Low Temperature: %.1f°C\n", (config.tempLowThreshold / 10.0) - 273.15);
-  Serial.printf("Low Voltage: %.2fV\n", config.voltLowThreshold / 1000.0);
-  Serial.printf("High Voltage: %.2fV\n", config.voltHighThreshold / 1000.0);
-  Serial.printf("Current Threshold: %.2fA\n", config.currentThreshold / 1000.0);
+void printConfiguration(const BMSConfig& config) {
+    Serial.println("\nBMS Configuration:");
+    Serial.println("-------------------");
+    Serial.printf("Chemistry: %s\n", 
+        config.chemistry == BatteryChemistry::LIION ? "Li-ion" :
+        config.chemistry == BatteryChemistry::LIPO ? "LiPo" :
+        config.chemistry == BatteryChemistry::LIFEP04 ? "LiFePO4" : "Unknown");
+    Serial.printf("Design Capacity: %dmAh\n", config.designCapacity);
+    Serial.printf("Overvoltage Threshold: %.2fV\n", config.overvoltageThreshold / 1000.0f);
+    Serial.printf("Undervoltage Threshold: %.2fV\n", config.undervoltageThreshold / 1000.0f);
+    Serial.printf("Overcurrent Threshold: %.2fA\n", config.overcurrentThreshold / 1000.0f);
+    Serial.printf("Temperature Limit: %.1f°C\n", (config.temperatureLimit / 10.0f) - 273.15f);
 }
 
-void checkAlarms() {
-  uint16_t alarmStatus = bms.getAlarmStatus();
-  bool hasAlarm = false;
+void printBatteryStatus() {
+    BatteryStatus status;
+    if (!bms.getBatteryStatus(status)) {
+        Serial.println("Failed to read battery status!");
+        Serial.printf("Error: %d\n", static_cast<int>(bms.getLastError()));
+        return;
+    }
 
-  Serial.println("\nChecking Alarms:");
-  Serial.println("---------------");
+    Serial.println("\nBattery Status:");
+    Serial.println("--------------");
+    Serial.printf("Voltage: %.2fV\n", status.voltage);
+    Serial.printf("Current: %.2fA %s\n", abs(status.current), 
+        status.isCharging ? "(Charging)" : 
+        status.isDischarging ? "(Discharging)" : "(Idle)");
+    Serial.printf("Temperature: %.1f°C\n", status.temperature);
+    Serial.printf("State of Charge: %d%%\n", status.soc);
+    Serial.printf("State of Health: %d%%\n", status.soh);
+    Serial.printf("Cycle Count: %d\n", status.cycleCount);
+    Serial.printf("Remaining Capacity: %.2fAh\n", status.remainingCapacity);
+    Serial.printf("Full Charge Capacity: %.2fAh\n", status.fullChargeCapacity);
+    
+    if (status.hasError) {
+        Serial.println("\nWarnings/Errors:");
+        if (bms.isOverVoltage()) Serial.println("- Over Voltage!");
+        if (bms.isUnderVoltage()) Serial.println("- Under Voltage!");
+        if (bms.isOverCurrent()) Serial.println("- Over Current!");
+        if (bms.isOverTemperature()) Serial.println("- Over Temperature!");
+    }
 
-  if (bms.isOverVoltageAlarm()) {
-    Serial.println("ALARM: Over Voltage!");
-    hasAlarm = true;
-  }
-  
-  if (bms.isUnderVoltageAlarm()) {
-    Serial.println("ALARM: Under Voltage!");
-    hasAlarm = true;
-  }
-  
-  if (bms.isOverCurrentAlarm()) {
-    Serial.println("ALARM: Over Current!");
-    hasAlarm = true;
-  }
-  
-  if (bms.isOverTemperatureAlarm()) {
-    Serial.println("ALARM: Over Temperature!");
-    hasAlarm = true;
-  }
-  
-  if (bms.isUnderTemperatureAlarm()) {
-    Serial.println("ALARM: Under Temperature!");
-    hasAlarm = true;
-  }
-  
-  if (bms.isLowSoCAlarm()) {
-    Serial.println("ALARM: Low State of Charge!");
-    hasAlarm = true;
-  }
-  
-  if (bms.isDischargingAlarm()) {
-    Serial.println("ALARM: Discharging!");
-    hasAlarm = true;
-  }
-  
-  if (bms.isChargingAlarm()) {
-    Serial.println("ALARM: Charging!");
-    hasAlarm = true;
-  }
+    // Power predictions
+    uint16_t timeToEmpty = bms.getAverageTimeToEmpty();
+    if (timeToEmpty != 65535) {
+        Serial.printf("Estimated Time to Empty: %d minutes\n", timeToEmpty);
+    }
+    
+    uint16_t timeToFull = bms.getAverageTimeToFull();
+    if (timeToFull != 65535) {
+        Serial.printf("Estimated Time to Full: %d minutes\n", timeToFull);
+    }
 
-  // Update LED status
-  digitalWrite(alarmLedPin, hasAlarm ? HIGH : LOW);
+    // Available energy/power
+    float availableEnergy = bms.getAvailableEnergy_inWh();
+    float availablePower = bms.getAvailablePower_inW();
+    Serial.printf("Available Energy: %.1fWh\n", availableEnergy);
+    Serial.printf("Available Power: %.1fW\n", availablePower);
 
-  if (!hasAlarm) {
-    Serial.println("No active alarms");
-  }
+    // Get error margin
+    uint8_t maxError = bms.getMaxError();
+    Serial.printf("Maximum Error: %d%%\n", maxError);
 }
 
 void setup() {
-  Serial.begin(115200);
-  while (!Serial) delay(10);
-
-  pinMode(alarmLedPin, OUTPUT);
-  digitalWrite(alarmLedPin, LOW);
-
-  Serial.println("BMSLib Alarms Example");
-  Serial.println("--------------------");
-
-  if (!bms.begin()) {
-    Serial.println("Failed to initialize BMS!");
-    while (1) {
-      digitalWrite(alarmLedPin, HIGH);
-      delay(500);
-      digitalWrite(alarmLedPin, LOW);
-      delay(500);
+    Serial.begin(115200);
+    while (!Serial) delay(10);
+    
+    Serial.println("BMSLib Advanced Example");
+    Serial.println("----------------------");
+    
+    if (!bms.begin()) {
+        Serial.println("Failed to initialize BMS!");
+        Serial.printf("Error: %d\n", static_cast<int>(bms.getLastError()));
+        while (1) delay(1000);
     }
-  }
-
-  // Configure alarms
-  configureAlarms();
-
-  // Clear any existing alarms
-  if (bms.clearAlarms()) {
-    Serial.println("Cleared existing alarms");
-  }
+    
+    // Configure the BMS
+    setupBMS();
 }
 
 void loop() {
-  // Print current battery parameters
-  Serial.println("\nCurrent Battery Status:");
-  Serial.printf("Voltage: %.2fV\n", bms.readVoltage_inVolts());
-  Serial.printf("Current: %.2fA\n", bms.readCurrent_inAmps());
-  Serial.printf("Temperature: %.1f°C\n", bms.readTemperature_inCelsius());
-  Serial.printf("SoC: %d%%\n", bms.readSoC());
-
-  // Check for alarms
-  checkAlarms();
-
-  // Example of modifying single alarm threshold
-  static uint8_t counter = 0;
-  if (++counter >= 12) {  // Every minute (12 * 5 seconds)
-    counter = 0;
+    static unsigned long lastUpdate = 0;
+    const unsigned long UPDATE_INTERVAL = 5000; // Update every 5 seconds
     
-    // Toggle between 20% and 30% for demo purposes
-    static bool toggleThreshold = false;
-    uint8_t newThreshold = toggleThreshold ? 20 : 30;
-    
-    Serial.printf("\nChanging Low SoC alarm threshold to %d%%\n", newThreshold);
-    if (!bms.setLowSoCAlarm(newThreshold)) {
-      Serial.println("Failed to update alarm threshold!");
+    if (millis() - lastUpdate >= UPDATE_INTERVAL) {
+        lastUpdate = millis();
+        printBatteryStatus();
+        
+        // Reset watchdog
+        bms.resetWatchdog();
     }
     
-    toggleThreshold = !toggleThreshold;
-  }
-
-  delay(5000);  // Check every 5 seconds
+    // Check for serial commands
+    if (Serial.available()) {
+        char cmd = Serial.read();
+        switch (cmd) {
+            case 's':
+                Serial.println("Putting BMS to sleep...");
+                if (bms.sleep()) {
+                    Serial.println("BMS is now in sleep mode");
+                }
+                break;
+                
+            case 'w':
+                Serial.println("Waking BMS...");
+                if (bms.wake()) {
+                    Serial.println("BMS is now awake");
+                }
+                break;
+                
+            case 'r':
+                Serial.println("Resetting BMS to factory defaults...");
+                if (bms.factoryReset()) {
+                    Serial.println("Factory reset successful");
+                    setupBMS();  // Reconfigure BMS
+                }
+                break;
+        }
+    }
 }
-
-/*
- * Additional Example: Interrupt-based Alarm Monitoring
- * 
- * If your hardware supports interrupts and you've connected
- * the BMS's alert pin to an interrupt-capable GPIO, you can
- * use the following code:
- *
- * const int alertPin = 2;  // Use an interrupt-capable pin
- * volatile bool alertReceived = false;
- * 
- * void alertISR() {
- *   alertReceived = true;
- * }
- * 
- * void setup() {
- *   // ... other setup code ...
- *   
- *   pinMode(alertPin, INPUT_PULLUP);
- *   attachInterrupt(digitalPinToInterrupt(alertPin), alertISR, FALLING);
- * }
- * 
- * void loop() {
- *   if (alertReceived) {
- *     alertReceived = false;
- *     checkAlarms();
- *   }
- *   
- *   // ... other loop code ...
- * }
- */

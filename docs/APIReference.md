@@ -1,15 +1,18 @@
 # BMSLib API Reference
 
 ## Table of Contents
-- [Initialization and Status](#initialization-and-status)
-- [Battery Measurements](#battery-measurements)
-- [Power Management](#power-management)
-- [Alarm System](#alarm-system)
-- [Configuration](#configuration)
-- [Safety Functions](#safety-functions)
-- [Data Structures](#data-structures)
+1. [Initialization](#initialization)
+2. [Basic Measurements](#basic-measurements)
+3. [Unit Conversions](#unit-conversions)
+4. [Power Management](#power-management)
+5. [Alarm System](#alarm-system)
+6. [Configuration](#configuration)
+7. [Safety Functions](#safety-functions)
+8. [Calibration](#calibration)
+9. [Data Structures](#data-structures)
+10. [Constants](#constants)
 
-## Initialization and Status
+## Initialization
 
 ### Constructor
 ```cpp
@@ -26,24 +29,31 @@ Creates a new BMSLib instance using specified I2C port.
 | `getLastError()` | Get last error code | None | BMSError | `BMSError err = bms.getLastError();` |
 | `getVersion()` | Get library version | `uint8_t &major, uint8_t &minor, uint8_t &patch` | void | `bms.getVersion(major, minor, patch);` |
 
-## Battery Measurements
+## Basic Measurements
 
 ### Raw Measurements
 
-| Function | Description | Return Type | Units | Example |
-|----------|-------------|-------------|--------|---------|
-| `readVoltage()` | Battery voltage | uint16_t | mV | `uint16_t mV = bms.readVoltage();` |
-| `readCurrent()` | Current flow | int16_t | mA | `int16_t mA = bms.readCurrent();` |
-| `readTemperature()` | Battery temperature | uint16_t | 0.1K | `uint16_t temp = bms.readTemperature();` |
-| `readCapacity()` | Current capacity | uint16_t | mAh | `uint16_t cap = bms.readCapacity();` |
-| `readSoC()` | State of Charge | uint16_t | % | `uint16_t soc = bms.readSoC();` |
-| `readSoH()` | State of Health | uint16_t | % | `uint16_t soh = bms.readSoH();` |
-| `readCycleCount()` | Charge cycles | uint16_t | count | `uint16_t cycles = bms.readCycleCount();` |
-| `readDesignCapacity()` | Design capacity | uint16_t | mAh | `uint16_t design = bms.readDesignCapacity();` |
-| `readFullChargeCapacity()` | Full charge capacity | uint16_t | mAh | `uint16_t full = bms.readFullChargeCapacity();` |
-| `readRemainingCapacity()` | Remaining capacity | uint16_t | mAh | `uint16_t remain = bms.readRemainingCapacity();` |
+| Function | Description | Return Type | Units | Range | Example |
+|----------|-------------|-------------|--------|-------|---------|
+| `readVoltage()` | Battery voltage | uint16_t | mV | 2000-4500 | `uint16_t mV = bms.readVoltage();` |
+| `readCurrent()` | Current flow | int16_t | mA | ±5000 | `int16_t mA = bms.readCurrent();` |
+| `readTemperature()` | Battery temperature | uint16_t | 0.1K | 2731-3430 | `uint16_t temp = bms.readTemperature();` |
+| `readCapacity()` | Current capacity | uint16_t | mAh | 0-65535 | `uint16_t cap = bms.readCapacity();` |
+| `readSoC()` | State of Charge | uint16_t | % | 0-100 | `uint16_t soc = bms.readSoC();` |
+| `readSoH()` | State of Health | uint16_t | % | 0-100 | `uint16_t soh = bms.readSoH();` |
+| `readCycleCount()` | Charge cycles | uint16_t | count | 0-65535 | `uint16_t cycles = bms.readCycleCount();` |
+| `readDesignCapacity()` | Design capacity | uint16_t | mAh | 0-65535 | `uint16_t design = bms.readDesignCapacity();` |
+| `readFullChargeCapacity()` | Full charge capacity | uint16_t | mAh | 0-65535 | `uint16_t full = bms.readFullChargeCapacity();` |
+| `readRemainingCapacity()` | Remaining capacity | uint16_t | mAh | 0-65535 | `uint16_t remain = bms.readRemainingCapacity();` |
+| `readSafetyStatus()` | Safety status flags | uint16_t | bitmask | - | `uint16_t status = bms.readSafetyStatus();` |
 
-### Converted Measurements
+### Status Structure Functions
+
+| Function | Description | Parameters | Return Type | Example |
+|----------|-------------|------------|-------------|---------|
+| `getBatteryStatus()` | Get comprehensive status | `BatteryStatus &status` | bool | `BatteryStatus status; bms.getBatteryStatus(status);` |
+
+## Unit Conversions
 
 | Function | Description | Return Type | Units | Example |
 |----------|-------------|-------------|--------|---------|
@@ -67,10 +77,10 @@ Creates a new BMSLib instance using specified I2C port.
 | `getAverageTimeToFull()` | Time until battery full | None | uint16_t | `uint16_t ttf = bms.getAverageTimeToFull();` |
 | `getAvailableEnergy()` | Available energy | None | uint16_t | `uint16_t ae = bms.getAvailableEnergy();` |
 | `getAvailablePower()` | Available power | None | uint16_t | `uint16_t ap = bms.getAvailablePower();` |
-| `getChargeVoltage()` | Charge voltage setting | None | uint16_t | `uint16_t cv = bms.getChargeVoltage();` |
-| `getChargeCurrent()` | Charge current setting | None | uint16_t | `uint16_t cc = bms.getChargeCurrent();` |
-| `setChargeVoltage()` | Set charge voltage | uint16_t voltage | bool | `bms.setChargeVoltage(4200);` |
-| `setChargeCurrent()` | Set charge current | uint16_t current | bool | `bms.setChargeCurrent(1000);` |
+| `getChargeVoltage()` | Get charge voltage limit | None | uint16_t | `uint16_t cv = bms.getChargeVoltage();` |
+| `getChargeCurrent()` | Get charge current limit | None | uint16_t | `uint16_t cc = bms.getChargeCurrent();` |
+| `setChargeVoltage()` | Set charge voltage limit | uint16_t voltage | bool | `bms.setChargeVoltage(4200);` |
+| `setChargeCurrent()` | Set charge current limit | uint16_t current | bool | `bms.setChargeCurrent(1000);` |
 
 ## Alarm System
 
@@ -78,12 +88,12 @@ Creates a new BMSLib instance using specified I2C port.
 
 | Function | Description | Parameters | Return Type | Example |
 |----------|-------------|------------|-------------|---------|
-| `setAlarmConfig()` | Configure all alarms | const BMSAlarmConfig& | bool | `bms.setAlarmConfig(config);` |
-| `getAlarmConfig()` | Get alarm configuration | BMSAlarmConfig& | bool | `bms.getAlarmConfig(config);` |
+| `setAlarmConfig()` | Configure all alarms | `const BMSAlarmConfig&` | bool | `bms.setAlarmConfig(config);` |
+| `getAlarmConfig()` | Get alarm configuration | `BMSAlarmConfig&` | bool | `bms.getAlarmConfig(config);` |
 | `getAlarmStatus()` | Get current alarm status | None | uint16_t | `uint16_t status = bms.getAlarmStatus();` |
 | `clearAlarms()` | Clear all alarms | None | bool | `bms.clearAlarms();` |
 
-### Individual Alarm Functions
+### Individual Alarm Checks
 
 | Function | Description | Return Type | Example |
 |----------|-------------|-------------|---------|
@@ -111,8 +121,8 @@ Creates a new BMSLib instance using specified I2C port.
 
 | Function | Description | Parameters | Return Type | Example |
 |----------|-------------|------------|-------------|---------|
-| `setConfiguration()` | Set BMS configuration | const BMSConfig& | bool | `bms.setConfiguration(config);` |
-| `getConfiguration()` | Get BMS configuration | BMSConfig& | bool | `bms.getConfiguration(config);` |
+| `setConfiguration()` | Set BMS configuration | `const BMSConfig&` | bool | `bms.setConfiguration(config);` |
+| `getConfiguration()` | Get BMS configuration | `BMSConfig&` | bool | `bms.getConfiguration(config);` |
 | `enterConfigMode()` | Enter configuration mode | None | bool | `bms.enterConfigMode();` |
 | `exitConfigMode()` | Exit configuration mode | None | bool | `bms.exitConfigMode();` |
 | `factoryReset()` | Reset to factory defaults | None | bool | `bms.factoryReset();` |
@@ -125,6 +135,14 @@ Creates a new BMSLib instance using specified I2C port.
 | `isUnderVoltage()` | Check under-voltage condition | bool | `if(bms.isUnderVoltage()) {...}` |
 | `isOverCurrent()` | Check over-current condition | bool | `if(bms.isOverCurrent()) {...}` |
 | `isOverTemperature()` | Check over-temperature condition | bool | `if(bms.isOverTemperature()) {...}` |
+
+## Calibration
+
+| Function | Description | Return Type | Example |
+|----------|-------------|-------------|---------|
+| `calibrateVoltage()` | Calibrate voltage measurement | bool | `bms.calibrateVoltage();` |
+| `calibrateCurrent()` | Calibrate current measurement | bool | `bms.calibrateCurrent();` |
+| `calibrateTemperature()` | Calibrate temperature measurement | bool | `bms.calibrateTemperature();` |
 
 ## Data Structures
 
@@ -165,12 +183,12 @@ struct BMSAlarmConfig {
     bool enableLowSoC;
     bool enableDischarging;
     bool enableCharging;
-    uint8_t socLowThreshold;
-    uint16_t tempHighThreshold;
-    uint16_t tempLowThreshold;
-    uint16_t voltLowThreshold;
-    uint16_t voltHighThreshold;
-    uint16_t currentThreshold;
+    uint8_t socLowThreshold;     // Percentage (0-100)
+    uint16_t tempHighThreshold;  // 0.1K units
+    uint16_t tempLowThreshold;   // 0.1K units
+    uint16_t voltLowThreshold;   // mV
+    uint16_t voltHighThreshold;  // mV
+    uint16_t currentThreshold;   // mA
 };
 ```
 
@@ -191,4 +209,36 @@ struct BatteryStatus {
     float fullChargeCapacity;// Ah
     BMSError lastError;
 };
+```
+
+## Constants
+
+### Register Addresses
+```cpp
+BMS_REG_CONTROL            0x00
+BMS_REG_TEMPERATURE        0x06
+BMS_REG_VOLTAGE           0x08
+BMS_REG_CURRENT           0x0A
+BMS_REG_CAPACITY          0x0C
+...
+```
+
+### Safety Status Masks
+```cpp
+BMS_SAFETY_OV_MASK        0x8000
+BMS_SAFETY_UV_MASK        0x4000
+BMS_SAFETY_OC_MASK        0x2000
+BMS_SAFETY_OT_MASK        0x1000
+```
+
+### Alarm Status Masks
+```cpp
+BMS_ALARM_OV              0x8000
+BMS_ALARM_UV              0x4000
+BMS_ALARM_OC              0x2000
+BMS_ALARM_OT              0x1000
+BMS_ALARM_UT              0x0800
+BMS_ALARM_SOC_LOW         0x0400
+BMS_ALARM_DISCHG          0x0200
+BMS_ALARM_CHG             0x0100
 ```
