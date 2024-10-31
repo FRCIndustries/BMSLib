@@ -1,6 +1,6 @@
 # BMSLib
 
-A comprehensive Arduino library for interfacing with the BQ34Z100-R2 Battery Management System. This library provides a complete interface for battery monitoring, configuration, and management across multiple Arduino platforms.
+A comprehensive Arduino library for interfacing with the BQ34Z100-R2 Battery Management System. This library provides a complete interface for battery monitoring, configuration, and management across multiple Arduino platforms. Originally intended for personal use, the library has grown into a comprehensive solution anyone can use.
 
 [![Arduino Badge](https://img.shields.io/badge/Arduino-Library-blue)]()
 [![Platform Badge](https://img.shields.io/badge/Platform-ESP32%20%7C%20ESP8266%20%7C%20Arduino-green)]()
